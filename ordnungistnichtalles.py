@@ -58,6 +58,8 @@ def odeint_ee(rhs, y0, t0, T, N, flag=False):
     else:
         return t, y
 
+"""
+# implementation of EE with RungeKutta class for testing
 def odeint_ee2(rhs, y0, t0, T, N, flag=False):    
     # Butcher Schema
     A = array([[0]])
@@ -71,6 +73,7 @@ def odeint_ee2(rhs, y0, t0, T, N, flag=False):
         return t[-1], y[:,-1]
     else:
         return t, y
+"""
 
 #####################################################
 #                                                   #
@@ -116,8 +119,10 @@ def odeint_rk(rhs, y0, t0, T, N, flag=False):
     else:
         return t, y
 
-# TEST CODE
-"""def testing():
+
+"""
+# code for testing the integrators
+def testing():
     figure()
     y0 = -6
     for name, integrator in [("ee2", odeint_ee2), ("ee", odeint_ee), ("he", odeint_he), ("rk", odeint_rk)]:
@@ -128,7 +133,8 @@ def odeint_rk(rhs, y0, t0, T, N, flag=False):
     savefig('test.pdf')
 testing()    
 from sys import exit
-exit()"""
+exit()
+"""
 
 
 # Anzahl Schritte fuer Konvergenzstudien
