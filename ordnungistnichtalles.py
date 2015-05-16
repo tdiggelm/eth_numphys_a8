@@ -1,15 +1,6 @@
 from numpy import *
 from matplotlib.pylab import *
-
-########################################################
-#                                                      #
-# TODO (optional): Sie koennen den Runge-Kutta Code    #
-#                  aus Serie 5 auf explizite Verfahren #
-#                  anpassen und hier benutzen.         #
-#                                                      #
-# from rk import *                                     #
-#                                                      #
-########################################################
+from rk import *
 
 def rhs(t, y):
     """Berechne rechte Seite der Diff.-Gl.
@@ -36,12 +27,29 @@ y0 = 1.0
 #                                                              #
 ################################################################
 
+def odeint_ee(rhs, y0, tstart, tend, steps, flag=False):
+    r"""Integrate ODE with explicit Euler method
 
-# Butcher Schema
-A = array([[0, 0],
-           [1, 0]])
-b = array([0.5, 0.5])
-c = array([0, 1])
+    Input: y0     ... initial condition
+           tstart ... start x
+           tend   ... end   x
+           steps  ... number of steps (h = (xEnd - xStart)/N)
+           flag   ... flag == False return complete solution: (phi, phi', t)
+                      flag == True  return solution at endtime only: phi(tEnd)
+
+    Output: t ... variable
+            y ... solution
+    """
+    t, h = linspace(tstart, tend, steps, retstep=True)
+    y0 = atleast_1d(y0)
+    y = zeros((size(y0), steps))
+    y[:,0] = y0
+    for k in xrange(steps-1):
+        y[:,k+1] = y[:,k] + h * rhs(t[k], y[:,k])
+    if flag:
+        return t[-1], y[:,-1]
+    else:
+        return t, y
 
 #####################################################
 #                                                   #
@@ -49,13 +57,20 @@ c = array([0, 1])
 #                                                   #
 #####################################################
 
-
-# Butcher Schema
-A = array([[ 0.0, 0.0, 0.0],
-           [ 0.5, 0.0, 0.0],
-           [-1.0, 2.0, 0.0]])
-b = array([1.0, 4.0, 1.0]) / 6.0
-c = array([0.0, 0.5, 1.0])
+def odeint_he(rhs, y0, t0, T, N, flag=False):    
+    # Butcher Schema
+    A = array([[0, 0],
+               [1, 0]])
+    b = array([0.5, 0.5])
+    c = array([0, 1])
+    rk = RungeKutta(A, b, c)
+    rk.set_rhs(rhs)
+    rk.set_iv(t0, atleast_1d(y0))
+    t, y = rk.integrate(T, N)
+    if flag:
+        return t[-1], y[:,-1]
+    else:
+        return t, y
 
 #####################################################################
 #                                                                   #
@@ -63,6 +78,44 @@ c = array([0.0, 0.5, 1.0])
 #                                                                   #
 #####################################################################
 
+def odeint_rk(rhs, y0, t0, T, N, flag=False):    
+    # Butcher Schema
+    A = array([[ 0.0, 0.0, 0.0],
+               [ 0.5, 0.0, 0.0],
+               [-1.0, 2.0, 0.0]])
+    b = array([1.0, 4.0, 1.0]) / 6.0
+    c = array([0.0, 0.5, 1.0])
+    rk = RungeKutta(A, b, c)
+    rk.set_rhs(rhs)
+    rk.set_iv(t0, atleast_1d(y0))
+    t, y = rk.integrate(T, N)
+    if flag:
+        return t[-1], y[:,-1]
+    else:
+        return t, y
+
+# testing
+def testing(integrator):
+    #g = 9.81
+    #l = 1
+    #f = lambda t, y: array([y[1], -g * sin(y[0]) / l])
+    #y0 = array([pi/4, 0])
+    #t, y = integrator(f, y0, 0, 10, 100)
+    #plot(t, y[0])
+    #plot(t, y[1])
+    y0 = -6
+    t, y = integrator(rhs, y0, -2, 2, 100)
+    print(y)
+    plot(t, y[0])
+    grid()
+    show()
+    t, y = integrator(rhs, y0, -2, 2, 100, flag=True)
+    print("y", y)
+
+#testing(odeint_ee)    
+#testing(odeint_rk)
+#testing(odeint_he)
+#exit
 
 # Anzahl Schritte fuer Konvergenzstudien
 NN = 2**arange(1,10)
@@ -70,6 +123,8 @@ NN = 2**arange(1,10)
 
 # Konvergenzstudie fuer T = 0.09
 tEnd   = 0.09
+
+#integrators = [("ee", integrate_EE)]
 
 error_ee_a = []
 error_he_a = []
@@ -82,7 +137,15 @@ for i, N in enumerate(NN):
     #       die verschiedenen Anzahlen an Schritten.           #
     #                                                          #
     ############################################################
-    pass
+    #for name, odeint in integrators:
+    t, y = odeint_ee(rhs, y0, t0, tEnd, N, flag=True)
+    error_ee_a.append(abs(yExactT009-y[0]))
+    
+    t, y = odeint_rk(rhs, y0, t0, tEnd, N, flag=True)
+    error_rk_a.append(abs(yExactT009-y[0]))
+    
+    t, y = odeint_he(rhs, y0, t0, tEnd, N, flag=True)
+    error_he_a.append(abs(yExactT009-y[0]))
 
 error_ee_a = array(error_ee_a)
 error_he_a = array(error_he_a)
@@ -103,7 +166,14 @@ for i, N in enumerate(NN):
     #       die verschiedenen Anzahlen an Schritten.           #
     #                                                          #
     ############################################################
-    pass
+    t, y = odeint_ee(rhs, y0, t0, tEnd, N, flag=True)
+    error_ee_b.append(abs(yExactT010-y[0]))
+    
+    t, y = odeint_rk(rhs, y0, t0, tEnd, N, flag=True)
+    error_rk_b.append(abs(yExactT010-y[0]))
+    
+    t, y = odeint_he(rhs, y0, t0, tEnd, N, flag=True)
+    error_he_b.append(abs(yExactT010-y[0]))
 
 error_rk_b = array(error_rk_b)
 error_he_b = array(error_he_b)
@@ -121,6 +191,12 @@ figure()
 #                                                        #
 ##########################################################
 
+loglog(NN, error_rk_a, label="error_rk_a")
+loglog(NN, error_he_a, label="error_he_a")
+#loglog(NN, error_ee_a, label="error_ee_a")
+loglog(NN, error_rk_b, label="error_rk_b")
+loglog(NN, error_he_b, label="error_he_b")
+#loglog(NN, error_ee_b, label="error_ee_b")
 grid(True)
 legend(loc='best')
 xlabel(r'Anzahl Schritte $N$')
