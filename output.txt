@@ -1,0 +1,6 @@
+Konvergenzrate Euler T=0.09 : 1.1018
+Konvergenzrate Heun  T=0.09 : 2.1970
+Konvergenzrate RK    T=0.09 : 3.2981
+Konvergenzrate Euler T=0.1 : 1.1197
+Konvergenzrate Heun  T=0.1 : 2.6051
+Konvergenzrate RK    T=0.1 : 1.9287
