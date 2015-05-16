@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+#############################################################################
+# course:   Numerische Methoden D-PHYS
+# exercise: assignment 8
+# author:   Thomas Diggelmann <thomas.diggelmann@student.ethz.ch>
+# date:     16.04.2015
+#############################################################################
 from numpy import *
 from matplotlib.pylab import *
 from rk import *
@@ -27,25 +34,39 @@ y0 = 1.0
 #                                                              #
 ################################################################
 
-def odeint_ee(rhs, y0, tstart, tend, steps, flag=False):
+def odeint_ee(rhs, y0, t0, T, N, flag=False):
     r"""Integrate ODE with explicit Euler method
 
     Input: y0     ... initial condition
-           tstart ... start x
-           tend   ... end   x
-           steps  ... number of steps (h = (xEnd - xStart)/N)
+           t0     ... start x
+           T      ... end   x
+           N      ... number of steps (h = (xEnd - xStart)/N)
            flag   ... flag == False return complete solution: (phi, phi', t)
                       flag == True  return solution at endtime only: phi(tEnd)
 
     Output: t ... variable
             y ... solution
     """
-    t, h = linspace(tstart, tend, steps, retstep=True)
+    t, h = linspace(t0, T, N, retstep=True)
     y0 = atleast_1d(y0)
-    y = zeros((size(y0), steps))
+    y = zeros((size(y0), N))
     y[:,0] = y0
-    for k in xrange(steps-1):
+    for k in xrange(N-1):
         y[:,k+1] = y[:,k] + h * rhs(t[k], y[:,k])
+    if flag:
+        return t[-1], y[:,-1]
+    else:
+        return t, y
+
+def odeint_ee2(rhs, y0, t0, T, N, flag=False):    
+    # Butcher Schema
+    A = array([[0]])
+    b = array([1])
+    c = array([0])
+    rk = RungeKutta(A, b, c)
+    rk.set_rhs(rhs)
+    rk.set_iv(t0, atleast_1d(y0))
+    t, y = rk.integrate(T, N)
     if flag:
         return t[-1], y[:,-1]
     else:
@@ -56,6 +77,7 @@ def odeint_ee(rhs, y0, tstart, tend, steps, flag=False):
 # TODO: Implementieren Sie hier das Heun Verfahren. #
 #                                                   #
 #####################################################
+
 
 def odeint_he(rhs, y0, t0, T, N, flag=False):    
     # Butcher Schema
@@ -94,28 +116,20 @@ def odeint_rk(rhs, y0, t0, T, N, flag=False):
     else:
         return t, y
 
-# testing
-def testing(integrator):
-    #g = 9.81
-    #l = 1
-    #f = lambda t, y: array([y[1], -g * sin(y[0]) / l])
-    #y0 = array([pi/4, 0])
-    #t, y = integrator(f, y0, 0, 10, 100)
-    #plot(t, y[0])
-    #plot(t, y[1])
+# TEST CODE
+"""def testing():
+    figure()
     y0 = -6
-    t, y = integrator(rhs, y0, -2, 2, 100)
-    print(y)
-    plot(t, y[0])
+    for name, integrator in [("ee2", odeint_ee2), ("ee", odeint_ee), ("he", odeint_he), ("rk", odeint_rk)]:
+        t, y = integrator(rhs, y0, -2, 2, 10)
+        plot(t, y[0], label=name)
     grid()
-    show()
-    t, y = integrator(rhs, y0, -2, 2, 100, flag=True)
-    print("y", y)
+    legend(loc='best')
+    savefig('test.pdf')
+testing()    
+from sys import exit
+exit()"""
 
-#testing(odeint_ee)    
-#testing(odeint_rk)
-#testing(odeint_he)
-#exit
 
 # Anzahl Schritte fuer Konvergenzstudien
 NN = 2**arange(1,10)
@@ -123,8 +137,6 @@ NN = 2**arange(1,10)
 
 # Konvergenzstudie fuer T = 0.09
 tEnd   = 0.09
-
-#integrators = [("ee", integrate_EE)]
 
 error_ee_a = []
 error_he_a = []
@@ -191,44 +203,35 @@ figure()
 #                                                        #
 ##########################################################
 
-loglog(NN, error_rk_a, label="error_rk_a")
-loglog(NN, error_he_a, label="error_he_a")
-#loglog(NN, error_ee_a, label="error_ee_a")
-loglog(NN, error_rk_b, label="error_rk_b")
-loglog(NN, error_he_b, label="error_he_b")
-#loglog(NN, error_ee_b, label="error_ee_b")
-grid(True)
-legend(loc='best')
-xlabel(r'Anzahl Schritte $N$')
-ylabel('Fehler')
-savefig('ordnungistnichtalles.png')
-
-
 # Konvergenzraten
-rate_ee_a = 0.0
-rate_he_a = 0.0
-rate_rk_a = 0.0
 
-##########################################################
-#                                                        #
-# TODO: Berechnen Sie hier die Konvergenzraten zu T=0.09 #
-#                                                        #
-##########################################################
+rate_ee_a = -polyfit(log(NN), log(error_ee_a), 1)[0]
+rate_he_a = -polyfit(log(NN), log(error_he_a), 1)[0]
+rate_rk_a = -polyfit(log(NN), log(error_rk_a), 1)[0]
 
 print("Konvergenzrate Euler T=0.09 : %.4f" % rate_ee_a)
 print("Konvergenzrate Heun  T=0.09 : %.4f" % rate_he_a)
 print("Konvergenzrate RK    T=0.09 : %.4f" % rate_rk_a)
 
-rate_ee_b = 0.0
-rate_he_b = 0.0
-rate_rk_b = 0.0
-
-#########################################################
-#                                                       #
-# TODO: Berechnen Sie hier die Konvergenzraten zu T=0.1 #
-#                                                       #
-#########################################################
+rate_ee_b = -polyfit(log(NN), log(error_ee_b), 1)[0]
+rate_he_b = -polyfit(log(NN), log(error_he_b), 1)[0]
+rate_rk_b = -polyfit(log(NN), log(error_rk_b), 1)[0]
 
 print("Konvergenzrate Euler T=0.1 : %.4f" % rate_ee_b)
 print("Konvergenzrate Heun  T=0.1 : %.4f" % rate_he_b)
 print("Konvergenzrate RK    T=0.1 : %.4f" % rate_rk_b)
+
+loglog(NN, error_rk_a, "b+-", label="RK $T=0.09$ $p=%.4f$" % rate_rk_a)
+loglog(NN, error_rk_b, "b+--", label="RK $T=0.10$ $p=%.4f$" % rate_rk_b)
+loglog(NN, error_he_a, "r+-", label="HE $T=0.09$ $p=%.4f$" % rate_he_a)
+loglog(NN, error_he_b, "r+--", label="HE $T=0.10$ $p=%.4f$" % rate_he_b)
+loglog(NN, error_ee_a, "g+-", label="EE $T=0.09$ $p=%.4f$" % rate_ee_a)
+loglog(NN, error_ee_b, "g+--", label="EE $T=0.10$ $p=%.4f$" % rate_ee_b)
+title("Konvergenzordnungen")
+grid(True)
+legend(loc='best', prop={'size': 10})
+xlabel(r'Anzahl Schritte $N$')
+ylabel('Fehler')
+savefig('ordnungistnichtalles.pdf')
+
+

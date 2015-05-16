@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #############################################################################
 # course:   Numerische Methoden D-PHYS
-# exercise: assignment 5
+# exercise: assignment 8
 # author:   Thomas Diggelmann <thomas.diggelmann@student.ethz.ch>
-# date:     13.04.2015
+# date:     16.04.2015
 #############################################################################
 from numpy import zeros, tile, array, shape, hstack
 from scipy.optimize import fsolve
@@ -64,13 +64,13 @@ class RungeKutta(object):
         # Hinweis: Rufen Sie die Klassen-Methode self._step geeignet auf.               #
         #                                                                               #
         #################################################################################
-        dt = float(Tend - self._T0)/steps
+        dt = float(Tend - self._T0)/(steps-1)
         u[:-1, 0] = self._IV
         u[-1, 0] = self._T0
         for i in xrange(0, steps-1):
             u[:,i+1] = self._step(u[:,i], dt)
         return u[-1,:], u[:-1,:]
-
+        
 
     def _step(self, u, dt):
         r"""
@@ -99,6 +99,7 @@ class RungeKutta(object):
         b = self._b
         c = self._c
         A = self._A
+        
         tn, yn = u[-1], u[:-1]
         def F(k0):
             k0 = k0.reshape((s,d))
